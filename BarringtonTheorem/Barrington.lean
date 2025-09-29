@@ -1,2 +1,4 @@
-import BarringtonTheorem.group_programs
-import BarringtonTheorem.formula
+import BarringtonTheorem.GroupPrograms
+import BarringtonTheorem.Formula
+
+open BarringtonTheorem
