@@ -1,48 +1,42 @@
 import Mathlib.Data.Nat.Basic
-
-#check String
-
-def s : String := "Barrington"
-#check s
-#eval s
-
-namespace BarringtonTheorem
-
-inductive Formula : Type where
-|var : String → Formula
-|not : Formula → Formula
-|and : Formula → Formula → Formula
-
-def eval_formula : Formula → (String → Bool) → Bool
-| Formula.var name, env => env name
-| Formula.not f, env => not (eval_formula f env)
-| Formula.and f1 f2, env => (eval_formula f1 env) && (eval_formula f2 env)
-
-def sizeFormula : Formula → Nat
-| Formula.var _ => 1
-| Formula.not f => 1 + sizeFormula f
-| Formula.and f1 f2 => 1 + sizeFormula f1 + sizeFormula f2
-
-def depthFormula : Formula → Nat
-| Formula.var _ => 0
-| Formula.not f => 1 + depthFormula f
-| Formula.and f1 f2 => 1 + Nat.max (depthFormula f1) (depthFormula f2)
-
-end BarringtonTheorem
+import BarringtonTheorem.GroupPrograms
 
 open BarringtonTheorem
+
+inductive Formula (n : ℕ): Type where
+  | var : Fin n → Formula n
+  | not : Formula n → Formula n
+  | and : Formula n → Formula n → Formula n
+
+def Formula.eval : Formula n → Input n→ Bool
+| Formula.var i, env => env i
+| Formula.not f, env => ¬(Formula.eval f env)
+| Formula.and f1 f2, env => (Formula.eval f1 env) && (Formula.eval f2 env)
+
+def Formula.size : Formula n→ Nat
+| Formula.var _ => 1
+| Formula.not f => 1 + Formula.size f
+| Formula.and f1 f2 => 1 + Formula.size f1 + Formula.size f2
+
+def Formula.depth : Formula n → Nat
+| Formula.var _ => 0
+| Formula.not f => 1 + Formula.depth f
+| Formula.and f1 f2 => 1 + Nat.max (Formula.depth f1) (Formula.depth f2)
+
+def computed_by_formula (f : Input n→ Bool) (d : ℕ) : Prop :=
+  ∃ φ : Formula n, Formula.depth φ ≤ d ∧ ∀ x : Input n, Formula.eval φ x = f x
+
 -- building an example
 
-def env1 : String → Bool :=
-  fun name =>
-  match name with
-  | "x" => true
-  | "y" => false
-  | "z" => true
-  | _   => false
+def l : List Bool := [true, false, true, false,
+true, true, true, false]
+#eval l[2]!
 
-def example_formula : Formula :=
-  Formula.and (Formula.var "x") (Formula.not (Formula.var "y"))
-#eval eval_formula example_formula env1
-#eval sizeFormula example_formula
-#eval depthFormula example_formula
+def env1 : Fin 8 → Bool :=
+  fun i => if i < l.length then l[i]! else false
+
+def example_formula : Formula 8 :=
+  Formula.and (Formula.var 2) (Formula.not (Formula.var 3))
+#eval Formula.eval example_formula env1
+#eval Formula.size example_formula
+#eval Formula.depth example_formula
