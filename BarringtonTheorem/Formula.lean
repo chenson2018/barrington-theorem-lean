@@ -23,7 +23,7 @@ def Formula.depth : Formula n → Nat
 | Formula.not f => 1 + Formula.depth f
 | Formula.and f1 f2 => 1 + Nat.max (Formula.depth f1) (Formula.depth f2)
 
-def computed_by_formula (f : Input n→ Bool) (d : ℕ) : Prop :=
+def computed_by_formula (f : Input n → Bool) (d : ℕ) : Prop :=
   ∃ φ : Formula n, Formula.depth φ ≤ d ∧ ∀ x : Input n, Formula.eval φ x = f x
 
 -- building an example

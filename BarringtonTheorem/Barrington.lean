@@ -20,7 +20,7 @@ lemma evalProgram_conjugate (P : GroupProgram (Equiv.Perm (Fin n)) m)
   γ * evalProgram x P * γ⁻¹ := by
   sorry
 
-theorem computable_for_conj_cycles
+lemma computable_for_conj_cycles
   (α β : Equiv.Perm (Fin n))
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (f : Input m → Bool)
@@ -46,7 +46,7 @@ theorem computable_for_conj_cycles
       rw [SemiconjBy] at hγ
       sorry
 
-theorem inverse_computable
+lemma inverse_computable
   (α : Equiv.Perm (Fin n))
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (f : Input m→ Bool)
@@ -56,13 +56,13 @@ theorem inverse_computable
     Q.length = P.length ∧ α_computes α Q (λ x => ¬ f x) := by
   sorry
 
-theorem and_computable
+lemma and_computable
   (α β : Equiv.Perm (Fin n))
   (hα : Equiv.Perm.IsCycle α)
   (hβ : Equiv.Perm.IsCycle β)
   (hαβ : α.support.card = β.support.card)
-  (f : Input m→ Bool)
-  (g : Input m→ Bool)
+  (f : Input m → Bool)
+  (g : Input m → Bool)
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (Q : GroupProgram (Equiv.Perm (Fin n)) m)
   (hα_computes : α_computes α P f)
@@ -73,7 +73,7 @@ theorem and_computable
     α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f x ∧ g x) := by
     sorry
 
-theorem product_cycles_conjugate_cycle:
+lemma product_cycles_conjugate_cycle:
   ∃ (α β : Equiv.Perm (Fin n)),
     Equiv.Perm.IsCycle α ∧
     Equiv.Perm.IsCycle β ∧
@@ -88,4 +88,8 @@ theorem barrington_theorem
     Equiv.Perm.IsCycle α ∧
       P.length ≤ 4 ^ d ∧
       α_computes α P f := by
-      sorry
+    obtain ⟨φ, hφd, hφf⟩ := hfcomputed
+    induction φ
+    case var a =>
+      simp[Formula.eval] at hφf
+      have α :
