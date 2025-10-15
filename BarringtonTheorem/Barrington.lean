@@ -2,6 +2,10 @@ import Mathlib.GroupTheory.Perm.Cycle.Basic
 import Mathlib.Algebra.Group.Conj
 import BarringtonTheorem.GroupPrograms
 import BarringtonTheorem.Formula
+import Mathlib.Data.Fin.Basic
+import Mathlib.Logic.Equiv.Basic
+import Mathlib.Tactic
+import Mathlib.Data.Nat.Basic
 
 open BarringtonTheorem
 
@@ -20,7 +24,7 @@ lemma evalProgram_conjugate (P : GroupProgram (Equiv.Perm (Fin n)) m)
   γ * evalProgram x P * γ⁻¹ := by
   sorry
 
-theorem computable_for_conj_cycles
+lemma computable_for_conj_cycles
   (α β : Equiv.Perm (Fin n))
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (f : Input m → Bool)
@@ -46,7 +50,7 @@ theorem computable_for_conj_cycles
       rw [SemiconjBy] at hγ
       sorry
 
-theorem inverse_computable
+lemma inverse_computable
   (α : Equiv.Perm (Fin n))
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (f : Input m→ Bool)
@@ -56,13 +60,13 @@ theorem inverse_computable
     Q.length = P.length ∧ α_computes α Q (λ x => ¬ f x) := by
   sorry
 
-theorem and_computable
+lemma and_computable
   (α β : Equiv.Perm (Fin n))
   (hα : Equiv.Perm.IsCycle α)
   (hβ : Equiv.Perm.IsCycle β)
   (hαβ : α.support.card = β.support.card)
-  (f : Input m→ Bool)
-  (g : Input m→ Bool)
+  (f : Input m → Bool)
+  (g : Input m → Bool)
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (Q : GroupProgram (Equiv.Perm (Fin n)) m)
   (hα_computes : α_computes α P f)
@@ -73,13 +77,25 @@ theorem and_computable
     α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f x ∧ g x) := by
     sorry
 
-theorem product_cycles_conjugate_cycle:
+lemma product_cycles_conjugate_cycle:
   ∃ (α β : Equiv.Perm (Fin n)),
     Equiv.Perm.IsCycle α ∧
     Equiv.Perm.IsCycle β ∧
     α.support.card = β.support.card ∧
     Equiv.Perm.IsCycle (α * β * α⁻¹ * β⁻¹) := by
     sorry
+
+def example_perm : Equiv.Perm (Fin 5) :=
+  (Equiv.swap 0 4) * (Equiv.swap 0 3) * (Equiv.swap 0 2) * (Equiv.swap 0 1)
+
+lemma example_perm_is_cycle : Equiv.Perm.IsCycle example_perm := by
+  sorry
+
+#eval example_perm 0
+#eval example_perm 1
+#eval example_perm 2
+#eval example_perm 3
+#eval example_perm 4
 
 theorem barrington_theorem
   (f : Input m → Bool)
@@ -88,4 +104,32 @@ theorem barrington_theorem
     Equiv.Perm.IsCycle α ∧
       P.length ≤ 4 ^ d ∧
       α_computes α P f := by
+    obtain ⟨φ, hφd, hφf⟩ := hfcomputed
+    let α := example_perm
+    use α
+    induction φ
+    case var a =>
+      simp[Formula.eval] at hφf
+      let gpt : GPTriple (Equiv.Perm (Fin 5)) m :={
+        i := a
+        g₀ := 1
+        g₁ := α
+      }
+      let P : GroupProgram (Equiv.Perm (Fin 5)) m := [gpt]
+      use P
+      constructor
+      case left =>
+        exact example_perm_is_cycle
+      case right =>
+        constructor
+        case left =>
+          simp [P]
+          have h1 : 0 < 4 := by linarith
+          exact Nat.one_le_pow d 4 h1
+        case right =>
+          simp [P, gpt, α_computes, evalProgram, evalTriple]
+          intro x
+          rw [← hφf x]
+    case not F F_ih =>
       sorry
+    sorry
