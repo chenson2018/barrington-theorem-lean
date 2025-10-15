@@ -2,6 +2,10 @@ import Mathlib.GroupTheory.Perm.Cycle.Basic
 import Mathlib.Algebra.Group.Conj
 import BarringtonTheorem.GroupPrograms
 import BarringtonTheorem.Formula
+import Mathlib.Data.Fin.Basic
+import Mathlib.Logic.Equiv.Basic
+import Mathlib.Tactic
+import Mathlib.Data.Nat.Basic
 
 open BarringtonTheorem
 
@@ -81,6 +85,18 @@ lemma product_cycles_conjugate_cycle:
     Equiv.Perm.IsCycle (α * β * α⁻¹ * β⁻¹) := by
     sorry
 
+def example_perm : Equiv.Perm (Fin 5) :=
+  (Equiv.swap 0 4) * (Equiv.swap 0 3) * (Equiv.swap 0 2) * (Equiv.swap 0 1)
+
+lemma example_perm_is_cycle : Equiv.Perm.IsCycle example_perm := by
+  sorry
+
+#eval example_perm 0
+#eval example_perm 1
+#eval example_perm 2
+#eval example_perm 3
+#eval example_perm 4
+
 theorem barrington_theorem
   (f : Input m → Bool)
   (hfcomputed : computed_by_formula f d) :
@@ -89,7 +105,31 @@ theorem barrington_theorem
       P.length ≤ 4 ^ d ∧
       α_computes α P f := by
     obtain ⟨φ, hφd, hφf⟩ := hfcomputed
+    let α := example_perm
+    use α
     induction φ
     case var a =>
       simp[Formula.eval] at hφf
-      have α :
+      let gpt : GPTriple (Equiv.Perm (Fin 5)) m :={
+        i := a
+        g₀ := 1
+        g₁ := α
+      }
+      let P : GroupProgram (Equiv.Perm (Fin 5)) m := [gpt]
+      use P
+      constructor
+      case left =>
+        exact example_perm_is_cycle
+      case right =>
+        constructor
+        case left =>
+          simp [P]
+          have h1 : 0 < 4 := by linarith
+          exact Nat.one_le_pow d 4 h1
+        case right =>
+          simp [P, gpt, α_computes, evalProgram, evalTriple]
+          intro x
+          rw [← hφf x]
+    case not F F_ih =>
+      sorry
+    sorry
