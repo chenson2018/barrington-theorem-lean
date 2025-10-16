@@ -64,16 +64,14 @@ lemma and_computable
   (α β : Equiv.Perm (Fin n))
   (hα : Equiv.Perm.IsCycle α)
   (hβ : Equiv.Perm.IsCycle β)
-  (hαβ : α.support.card = β.support.card)
   (f : Input m → Bool)
   (g : Input m → Bool)
   (P : GroupProgram (Equiv.Perm (Fin n)) m)
   (Q : GroupProgram (Equiv.Perm (Fin n)) m)
   (hα_computes : α_computes α P f)
-  (hβ_computes : α_computes β Q g)
-  (hPQ : P.length = Q.length):
+  (hβ_computes : α_computes β Q g):
   ∃ (R : GroupProgram (Equiv.Perm (Fin n)) m),
-    R.length = 4 * P.length ∧
+    R.length = 2 * (P.length + Q.length) ∧
     α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f x ∧ g x) := by
     sorry
 
@@ -156,4 +154,64 @@ theorem barrington_theorem
         exact hPlen
       case right => exact hα_computesQ
     case and F1 F2 hF1 hF2 =>
-      sorry
+      let f1 : Input m → Bool := λ x => F1.eval x
+      let f2 : Input m → Bool := λ x => F2.eval x
+      have hf1depth_le_d : F1.depth ≤ d - 1 := by
+        rw [Formula.depth] at hφd
+        have h_one_le_d := Nat.le_of_add_right_le hφd
+        apply Nat.lt_of_succ_le at h_one_le_d
+        apply Nat.one_add_le_iff.mp at hφd
+        have hdepthF1lemax : F1.depth ≤ max F1.depth F2.depth := le_max_left F1.depth F2.depth
+        have hF1depthled : F1.depth < d := lt_of_le_of_lt hdepthF1lemax hφd
+        exact (Nat.le_sub_one_iff_lt h_one_le_d).mpr hF1depthled
+      have hf2depth_le_d : F2.depth ≤ d - 1 := by
+        rw [Formula.depth] at hφd
+        have h_one_le_d := Nat.le_of_add_right_le hφd
+        apply Nat.lt_of_succ_le at h_one_le_d
+        apply Nat.one_add_le_iff.mp at hφd
+        have hdepthF1lemax : F2.depth ≤ max F1.depth F2.depth := le_max_right F1.depth F2.depth
+        have hF2depthled : F2.depth < d := lt_of_le_of_lt hdepthF1lemax hφd
+        exact (Nat.le_sub_one_iff_lt h_one_le_d).mpr hF2depthled
+      have hf1computable : ∀ (x : Input m), F1.eval x = f1 x := by
+        simp [f1]
+      have hf2computable : ∀ (x : Input m), F2.eval x = f2 x := by
+        simp [f2]
+      have h1 : ∃ α P, Equiv.Perm.IsCycle α ∧ List.length P ≤ 4 ^ (d - 1) ∧ α_computes α P f1 := hF1 f1 hf1depth_le_d hf1computable
+      have h2 : ∃ α P, Equiv.Perm.IsCycle α ∧ List.length P ≤ 4 ^ (d - 1) ∧ α_computes α P f2 := hF2 f2 hf2depth_le_d hf2computable
+      obtain ⟨α, P, hαcycle, hPLength, hα_computes⟩ := h1
+      obtain ⟨β, Q, hβcycle, hQLength, hβ_computes⟩ := h2
+      use (α * β * α⁻¹ * β⁻¹)
+      have hexistsR : ∃ (R : GroupProgram (Equiv.Perm (Fin 5)) m),
+      R.length = 2 * (P.length + Q.length) ∧
+      α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f1 x ∧ f2 x) := and_computable α β hαcycle hβcycle f1 f2 P Q hα_computes hβ_computes
+      obtain ⟨R, hRLength, hComputes⟩ := hexistsR
+      use R
+      constructor
+      case left => sorry
+      case right =>
+        constructor
+        case left =>
+          have h := add_le_add hPLength hQLength
+          rw [← two_mul] at h
+          rw [hRLength]
+          have h1 : 2 * (P.length + Q.length) ≤ 2 * (2 * 4^(d - 1)) := by exact Nat.mul_le_mul_left 2 h
+          rw [←Nat.mul_assoc 2 2 (4 ^ (d - 1))] at h1
+          simp at h1
+          rw [mul_comm 4 (4 ^ (d - 1))] at h1
+          rw [← Nat.pow_succ 4 (d - 1)] at h1
+          rw [← Nat.pred_eq_sub_one] at h1
+          have h_one_le_d := Nat.le_of_add_right_le hφd
+          apply Nat.lt_of_succ_le at h_one_le_d
+          rw [Nat.succ_pred_eq_of_pos h_one_le_d] at h1
+          exact h1
+        case right =>
+          rw [α_computes] at hComputes
+          rw [α_computes]
+          have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
+          intro x
+          have hx := hComputes x
+          have hfx := f1_and_f2_eq_f x
+          rw [hx]
+          have hdec : decide (f1 x = true ∧ f2 x = true) = decide (f x = true) := Bool.decide_congr (iff_of_eq hfx)
+          rw [hdec]
+          simp
