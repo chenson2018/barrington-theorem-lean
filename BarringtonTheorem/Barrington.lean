@@ -97,6 +97,7 @@ lemma example_perm_is_cycle : Equiv.Perm.IsCycle example_perm := by
 #eval example_perm 3
 #eval example_perm 4
 
+
 theorem barrington_theorem
   (f : Input m → Bool)
   (hfcomputed : computed_by_formula f d) :
@@ -105,10 +106,10 @@ theorem barrington_theorem
       P.length ≤ 4 ^ d ∧
       α_computes α P f := by
     obtain ⟨φ, hφd, hφf⟩ := hfcomputed
-    let α := example_perm
-    use α
-    induction φ
+    induction φ generalizing f d
     case var a =>
+      let α := example_perm
+      use α
       simp[Formula.eval] at hφf
       let gpt : GPTriple (Equiv.Perm (Fin 5)) m :={
         i := a
@@ -131,5 +132,28 @@ theorem barrington_theorem
           intro x
           rw [← hφf x]
     case not F F_ih =>
+      rw [Formula.depth] at hφd
+      simp [Formula.eval] at hφf
+      have h0: F.depth ≤ d := by
+        rw [← Nat.succ_eq_one_add] at hφd
+        exact Nat.le_of_succ_le hφd
+      have h2 : ∀ (x : Input m), F.eval x = decide ¬f x = true := by
+        simp
+        exact hφf
+      have h1: ∃ (α : Equiv.Perm (Fin 5))(P : GroupProgram (Equiv.Perm (Fin 5)) m), α.IsCycle ∧ P.length ≤ 4 ^ d ∧ α_computes α P (λ x => ¬ f x) := by
+        exact F_ih (λ x => ¬ f x) h0 h2
+      obtain ⟨α, P, hαcycle, hPlen, hα_computesP⟩ := h1
+      have hQ := inverse_computable α P (λ x => ¬ f x) hαcycle hα_computesP
+      simp at hQ
+      obtain ⟨Q, hEqLen, hα_computesQ⟩ := hQ
+      use α
+      use Q
+      constructor
+      case left => exact hαcycle
+      constructor
+      case left =>
+        rw [hEqLen]
+        exact hPlen
+      case right => exact hα_computesQ
+    case and F1 F2 hF1 hF2 =>
       sorry
-    sorry
