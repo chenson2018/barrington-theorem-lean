@@ -303,7 +303,13 @@ theorem barrington_theorem
             exact h1
           · rw [computes_with] at hComputes
             rw [computes_with]
-            have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
+            have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := by
+              intro x
+              have h := hφf x
+              rw [← h]
+              simp [f1, f2]
+              rw [Formula.eval]
+              simp
             intro x
             have hx := hComputes x
             have hfx := f1_and_f2_eq_f x
