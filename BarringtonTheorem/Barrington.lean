@@ -50,10 +50,18 @@ lemma computable_for_conj_cycles
   · intro x
     simp [Q]
     rw [evalProgram_conjugate P γ x]
-    rw [computes_with] at hcomputes_with
     have h1 := evalProgram_conjugate P γ x
     rw [SemiconjBy] at hγ
-    sorry
+    rw [computes_with] at hcomputes_with
+    rw [hcomputes_with x]
+    by_cases f x
+    case pos hpos =>
+      rw [hpos]
+      simp
+      rw [hγ]
+      rw [mul_inv_cancel_right β ↑γ]
+    case neg hneg =>
+      simp [hneg]
 
 lemma not_computable
     (α : Equiv.Perm (Fin n))
