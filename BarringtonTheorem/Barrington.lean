@@ -278,35 +278,46 @@ theorem barrington_theorem
     obtain ⟨R, hRLength, hComputes⟩ := hexistsR
     have existsαP :
       ∃ (α : Equiv.Perm (Fin 5)),
-      α.IsCycle → α.support.card = 5 → ∃ P,
+      α.IsCycle ∧ α.support.card = 5 ∧ ∃ P,
       List.length P ≤ 4 ^ d ∧ computes_with α P f := by
       use (α * β * α⁻¹ * β⁻¹)
-      intro hαβcycle hαβsupport
-      use R
       constructor
-      · have h := add_le_add hPLength hQLength
-        rw [← two_mul] at h
-        rw [hRLength]
-        have h1 : 2 * (P.length + Q.length) ≤ 2 * (2 * 4 ^ (d - 1)) :=
-          by exact Nat.mul_le_mul_left 2 h
-        rw [← Nat.mul_assoc 2 2 (4 ^ (d - 1))] at h1
-        simp at h1
-        rw [mul_comm 4 (4 ^ (d - 1))] at h1
-        rw [← Nat.pow_succ 4 (d - 1)] at h1
-        rw [← Nat.pred_eq_sub_one] at h1
-        have h_one_le_d := Nat.le_of_add_right_le hφd
-        apply Nat.lt_of_succ_le at h_one_le_d
-        rw [Nat.succ_pred_eq_of_pos h_one_le_d] at h1
-        exact h1
-      · rw [computes_with] at hComputes
-        rw [computes_with]
-        have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
-        intro x
-        have hx := hComputes x
-        have hfx := f1_and_f2_eq_f x
-        rw [hx]
-        have hdec : decide (f1 x = true ∧ f2 x = true) = decide (f x = true) :=
-          Bool.decide_congr (iff_of_eq hfx)
-        rw [hdec]
-        simp
-    sorry
+      . exact hαβConjProd
+      . constructor
+        . exact hαβConjProdSupport
+        . use R
+          constructor
+          · have h := add_le_add hPLength hQLength
+            rw [← two_mul] at h
+            rw [hRLength]
+            have h1 : 2 * (P.length + Q.length) ≤ 2 * (2 * 4 ^ (d - 1)) :=
+              by exact Nat.mul_le_mul_left 2 h
+            rw [← Nat.mul_assoc 2 2 (4 ^ (d - 1))] at h1
+            simp at h1
+            rw [mul_comm 4 (4 ^ (d - 1))] at h1
+            rw [← Nat.pow_succ 4 (d - 1)] at h1
+            rw [← Nat.pred_eq_sub_one] at h1
+            have h_one_le_d := Nat.le_of_add_right_le hφd
+            apply Nat.lt_of_succ_le at h_one_le_d
+            rw [Nat.succ_pred_eq_of_pos h_one_le_d] at h1
+            exact h1
+          · rw [computes_with] at hComputes
+            rw [computes_with]
+            have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
+            intro x
+            have hx := hComputes x
+            have hfx := f1_and_f2_eq_f x
+            rw [hx]
+            have hdec : decide (f1 x = true ∧ f2 x = true) = decide (f x = true) :=
+              Bool.decide_congr (iff_of_eq hfx)
+            rw [hdec]
+            simp
+    intro γ hγcycle hγsupport
+    obtain ⟨δ, hδCycle, hδSupport, S, hSlen, hSComputes⟩ := existsαP
+    have δ_card_eq_γ_card : δ.support.card = γ.support.card := by
+      rw [hδSupport, hγsupport]
+    have hCompγ := @computable_for_conj_cycles 5 m δ γ S f hδCycle hγcycle δ_card_eq_γ_card hSComputes
+    obtain ⟨T, hTlen, hTcomputes⟩ := hCompγ
+    use T
+    rw [hTlen]
+    exact And.intro hSlen hTcomputes
