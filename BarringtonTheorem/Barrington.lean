@@ -6,12 +6,14 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Logic.Equiv.Basic
 import Mathlib.Tactic
 import Mathlib.Data.Nat.Basic
+import Mathlib.Tactic.FinCases
+import Mathlib.GroupTheory.Perm.Basic
 
 open BarringtonTheorem
 
 variable {n m : ℕ}
 
-def α_computes {G : Type} [Group G] (α : G)
+def computes_with {G : Type} [Group G] (α : G)
     (P : GroupProgram G m) (f : Input m → Bool) : Prop :=
   ∀ (x : Input m), evalProgram x P = if f x then α else 1
 
@@ -33,9 +35,9 @@ lemma computable_for_conj_cycles
     (hα : Equiv.Perm.IsCycle α)
     (hβ : Equiv.Perm.IsCycle β)
     (hαβ : α.support.card = β.support.card)
-    (hα_computes : α_computes α P f) :
+    (hcomputes_with : computes_with α P f) :
     ∃ (Q : GroupProgram (Equiv.Perm (Fin n)) m),
-      Q.length = P.length ∧ α_computes β Q f := by
+      Q.length = P.length ∧ computes_with β Q f := by
   obtain ⟨γ, hγ⟩ := Equiv.Perm.IsCycle.isConj hα hβ hαβ
   let Q : GroupProgram (Equiv.Perm (Fin n)) m :=
     P.map (λ t =>
@@ -48,19 +50,19 @@ lemma computable_for_conj_cycles
   · intro x
     simp [Q]
     rw [evalProgram_conjugate P γ x]
-    simp [α_computes] at hα_computes
+    rw [computes_with] at hcomputes_with
     have h1 := evalProgram_conjugate P γ x
     rw [SemiconjBy] at hγ
     sorry
 
-lemma inverse_computable
+lemma not_computable
     (α : Equiv.Perm (Fin n))
     (P : GroupProgram (Equiv.Perm (Fin n)) m)
     (f : Input m → Bool)
     (hα_cycle : Equiv.Perm.IsCycle α)
-    (hα : α_computes α P f) :
+    (hα : computes_with α P f) :
     ∃ (Q : GroupProgram (Equiv.Perm (Fin n)) m),
-      Q.length = P.length ∧ α_computes α Q (λ x => ¬ f x) := by
+      Q.length = P.length ∧ computes_with α Q (λ x => ¬ f x) := by
   sorry
 
 lemma and_computable
@@ -71,29 +73,109 @@ lemma and_computable
     (g : Input m → Bool)
     (P : GroupProgram (Equiv.Perm (Fin n)) m)
     (Q : GroupProgram (Equiv.Perm (Fin n)) m)
-    (hα_computes : α_computes α P f)
-    (hβ_computes : α_computes β Q g) :
+    (hcomputes_with : computes_with α P f)
+    (hβ_computes : computes_with β Q g) :
     ∃ (R : GroupProgram (Equiv.Perm (Fin n)) m),
       R.length = 2 * (P.length + Q.length) ∧
-      α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f x ∧ g x) := by
+      computes_with (α * β * α⁻¹ * β⁻¹) R (λ x => f x ∧ g x) := by
   sorry
 
 lemma product_cycles_conjugate_cycle :
-    ∃ (α β : Equiv.Perm (Fin n)),
+    ∃ (α β : Equiv.Perm (Fin 5)),
       Equiv.Perm.IsCycle α ∧
+      α.support.card = 5 ∧
       Equiv.Perm.IsCycle β ∧
-      α.support.card = β.support.card ∧
-      Equiv.Perm.IsCycle (α * β * α⁻¹ * β⁻¹) := by
-  sorry
+      β.support.card = 5 ∧
+      Equiv.Perm.IsCycle (α * β * α⁻¹ * β⁻¹) ∧
+      (α * β * α⁻¹ * β⁻¹).support.card = 5 := by
+  let α : Equiv.Perm (Fin 5) :=
+    (Equiv.swap 0 4) *
+    (Equiv.swap 0 3) *
+    (Equiv.swap 0 2) *
+    (Equiv.swap 0 1)
+  let β : Equiv.Perm (Fin 5) :=
+    (Equiv.swap 0 1) *
+    (Equiv.swap 0 3) *
+    (Equiv.swap 0 4) *
+    (Equiv.swap 0 2)
+  have hαβ : α * β * α⁻¹ * β⁻¹ = (Equiv.swap 0 1) * (Equiv.swap 0 4) * (Equiv.swap 0 2) * (Equiv.swap 0 3) := by decide
+  use α
+  use β
+  constructor
+  . rw [Equiv.Perm.IsCycle]
+    use 0
+    constructor
+    . trivial
+    . intro y hy
+      rw [Equiv.Perm.SameCycle]
+      fin_cases y
+      . use 0
+        trivial
+      . use 1
+        trivial
+      . use 2
+        trivial
+      . use 3
+        trivial
+      . use 4
+        trivial
+  . constructor
+    . rfl
+    . constructor
+      . rw [Equiv.Perm.IsCycle]
+        use 0
+        constructor
+        . trivial
+        . intro y hy
+          fin_cases y
+          . use 0
+            trivial
+          . use 4
+            trivial
+          . use 1
+            trivial
+          . use 3
+            trivial
+          . use 2
+            trivial
+      . constructor
+        . rfl
+        . constructor
+          . rw [Equiv.Perm.IsCycle]
+            use 0
+            constructor
+            . trivial
+            . intro y hy
+              rw [Equiv.Perm.SameCycle]
+              rw [hαβ]
+              fin_cases y
+              . use 0
+                trivial
+              . use 4
+                trivial
+              . use 2
+                trivial
+              . use 1
+                trivial
+              . use 3
+                trivial
+          . rw [hαβ]
+            rfl
 
-def example_perm : Equiv.Perm (Fin 5) :=
+def example_perm1 : Equiv.Perm (Fin 5) :=
+  (Equiv.swap 0 1) *
+  (Equiv.swap 0 3) *
+  (Equiv.swap 0 4) *
+  (Equiv.swap 0 2)
+
+def example_perm2 : Equiv.Perm (Fin 5) :=
   (Equiv.swap 0 4) *
   (Equiv.swap 0 3) *
   (Equiv.swap 0 2) *
   (Equiv.swap 0 1)
 
-lemma example_perm_is_cycle : Equiv.Perm.IsCycle example_perm := by
-  sorry
+def example_perm : Equiv.Perm (Fin 5) :=
+  example_perm2 * example_perm1 * example_perm2⁻¹ * example_perm1⁻¹
 
 #eval example_perm 0
 #eval example_perm 1
@@ -104,27 +186,23 @@ lemma example_perm_is_cycle : Equiv.Perm.IsCycle example_perm := by
 theorem barrington_theorem
     (f : Input m → Bool)
     (hfcomputed : computed_by_formula f d) :
-    ∃ (α : Equiv.Perm (Fin 5)) (P : GroupProgram (Equiv.Perm (Fin 5)) m),
-      Equiv.Perm.IsCycle α ∧
+    ∀ (α : Equiv.Perm (Fin 5)), Equiv.Perm.IsCycle α → α.support.card = 5 → ∃ (P : GroupProgram (Equiv.Perm (Fin 5)) m),
       P.length ≤ 4 ^ d ∧
-      α_computes α P f := by
+      computes_with α P f := by
   obtain ⟨φ, hφd, hφf⟩ := hfcomputed
   induction φ generalizing f d
   case var a =>
-    let α := example_perm
-    use α
+    intro α hαcycle hαsupport
     simp [Formula.eval] at hφf
     let gpt : GPTriple (Equiv.Perm (Fin 5)) m :=
       { i := a, g₀ := 1, g₁ := α }
     let P : GroupProgram (Equiv.Perm (Fin 5)) m := [gpt]
     use P
     constructor
-    · exact example_perm_is_cycle
-    constructor
     · simp [P]
       have h1 : 0 < 4 := by linarith
       exact Nat.one_le_pow d 4 h1
-    · simp [P, gpt, α_computes, evalProgram, evalTriple]
+    · simp [P, gpt, computes_with, evalProgram, evalTriple]
       intro x
       rw [← hφf x]
   case not F F_ih =>
@@ -136,22 +214,23 @@ theorem barrington_theorem
     have h2 : ∀ (x : Input m), F.eval x = decide ¬f x = true := by
       simp
       exact hφf
+    intro α hαcycle hαsupport
     have h1 :
-        ∃ (α : Equiv.Perm (Fin 5)) (P : GroupProgram (Equiv.Perm (Fin 5)) m),
-          α.IsCycle ∧ P.length ≤ 4 ^ d ∧ α_computes α P (λ x => ¬ f x) := by
-      exact F_ih (λ x => ¬ f x) h0 h2
-    obtain ⟨α, P, hαcycle, hPlen, hα_computesP⟩ := h1
-    have hQ := inverse_computable α P (λ x => ¬ f x) hαcycle hα_computesP
+        Equiv.Perm.IsCycle α → α.support.card = 5 → ∃ (P : GroupProgram (Equiv.Perm (Fin 5)) m),
+          P.length ≤ 4 ^ d ∧ computes_with α P (λ x => ¬ f x) := by
+      exact F_ih (λ x => ¬ f x) h0 h2 α
+    have hαcycle' := hαcycle
+    apply h1 at hαcycle
+    apply hαcycle at hαsupport
+    obtain ⟨P, hPlen, hcomputes_withP⟩ := hαsupport
+    have hQ := not_computable α P (λ x => ¬ f x) hαcycle' hcomputes_withP
     simp at hQ
-    obtain ⟨Q, hEqLen, hα_computesQ⟩ := hQ
-    use α
+    obtain ⟨Q, hEqLen, hcomputes_withQ⟩ := hQ
     use Q
-    constructor
-    · exact hαcycle
     constructor
     · rw [hEqLen]
       exact hPlen
-    · exact hα_computesQ
+    · exact hcomputes_withQ
   case and F1 F2 hF1 hF2 =>
     let f1 : Input m → Bool := λ x => F1.eval x
     let f2 : Input m → Bool := λ x => F2.eval x
@@ -177,49 +256,57 @@ theorem barrington_theorem
       exact (Nat.le_sub_one_iff_lt h_one_le_d).mpr hF2depthled
     have hf1computable : ∀ (x : Input m), F1.eval x = f1 x := by simp [f1]
     have hf2computable : ∀ (x : Input m), F2.eval x = f2 x := by simp [f2]
-    have h1 :
-        ∃ α P, Equiv.Perm.IsCycle α ∧ List.length P ≤ 4 ^ (d - 1) ∧
-          α_computes α P f1 :=
-      hF1 f1 hf1depth_le_d hf1computable
-    have h2 :
-        ∃ α P, Equiv.Perm.IsCycle α ∧ List.length P ≤ 4 ^ (d - 1) ∧
-          α_computes α P f2 :=
-      hF2 f2 hf2depth_le_d hf2computable
-    obtain ⟨α, P, hαcycle, hPLength, hα_computes⟩ := h1
-    obtain ⟨β, Q, hβcycle, hQLength, hβ_computes⟩ := h2
-    use (α * β * α⁻¹ * β⁻¹)
+    have hαβProdCycle := product_cycles_conjugate_cycle
+    obtain ⟨α, β, hαcycle, hαsupport, hβcycle, hβsupport, hαβConjProd, hαβConjProdSupport⟩ := hαβProdCycle
+    have h1 := hF1 f1 hf1depth_le_d hf1computable α
+    have h2 := hF2 f2 hf2depth_le_d hf2computable β
+    have hαcycle' := hαcycle
+    have hαsupport' := hαsupport
+    have hβcycle' := hβcycle
+    have hβsupport' := hβsupport
+    apply h1 at hαcycle'
+    apply hαcycle' at hαsupport'
+    apply h2 at hβcycle'
+    apply hβcycle' at hβsupport'
+    obtain ⟨P, hPLength, hcomputesf1⟩ := hαsupport'
+    obtain ⟨Q, hQLength, hcomputesf2⟩ := hβsupport'
     have hexistsR :
         ∃ (R : GroupProgram (Equiv.Perm (Fin 5)) m),
           R.length = 2 * (P.length + Q.length) ∧
-          α_computes (α * β * α⁻¹ * β⁻¹) R (λ x => f1 x ∧ f2 x) :=
-      and_computable α β hαcycle hβcycle f1 f2 P Q hα_computes hβ_computes
+          computes_with (α * β * α⁻¹ * β⁻¹) R (λ x => f1 x ∧ f2 x) :=
+          and_computable α β hαcycle hβcycle f1 f2 P Q hcomputesf1 hcomputesf2
     obtain ⟨R, hRLength, hComputes⟩ := hexistsR
-    use R
-    constructor
-    · sorry
-    constructor
-    · have h := add_le_add hPLength hQLength
-      rw [← two_mul] at h
-      rw [hRLength]
-      have h1 : 2 * (P.length + Q.length) ≤ 2 * (2 * 4 ^ (d - 1)) :=
-        by exact Nat.mul_le_mul_left 2 h
-      rw [← Nat.mul_assoc 2 2 (4 ^ (d - 1))] at h1
-      simp at h1
-      rw [mul_comm 4 (4 ^ (d - 1))] at h1
-      rw [← Nat.pow_succ 4 (d - 1)] at h1
-      rw [← Nat.pred_eq_sub_one] at h1
-      have h_one_le_d := Nat.le_of_add_right_le hφd
-      apply Nat.lt_of_succ_le at h_one_le_d
-      rw [Nat.succ_pred_eq_of_pos h_one_le_d] at h1
-      exact h1
-    · rw [α_computes] at hComputes
-      rw [α_computes]
-      have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
-      intro x
-      have hx := hComputes x
-      have hfx := f1_and_f2_eq_f x
-      rw [hx]
-      have hdec : decide (f1 x = true ∧ f2 x = true) = decide (f x = true) :=
-        Bool.decide_congr (iff_of_eq hfx)
-      rw [hdec]
-      simp
+    have existsαP :
+      ∃ (α : Equiv.Perm (Fin 5)),
+      α.IsCycle → α.support.card = 5 → ∃ P,
+      List.length P ≤ 4 ^ d ∧ computes_with α P f := by
+      use (α * β * α⁻¹ * β⁻¹)
+      intro hαβcycle hαβsupport
+      use R
+      constructor
+      · have h := add_le_add hPLength hQLength
+        rw [← two_mul] at h
+        rw [hRLength]
+        have h1 : 2 * (P.length + Q.length) ≤ 2 * (2 * 4 ^ (d - 1)) :=
+          by exact Nat.mul_le_mul_left 2 h
+        rw [← Nat.mul_assoc 2 2 (4 ^ (d - 1))] at h1
+        simp at h1
+        rw [mul_comm 4 (4 ^ (d - 1))] at h1
+        rw [← Nat.pow_succ 4 (d - 1)] at h1
+        rw [← Nat.pred_eq_sub_one] at h1
+        have h_one_le_d := Nat.le_of_add_right_le hφd
+        apply Nat.lt_of_succ_le at h_one_le_d
+        rw [Nat.succ_pred_eq_of_pos h_one_le_d] at h1
+        exact h1
+      · rw [computes_with] at hComputes
+        rw [computes_with]
+        have f1_and_f2_eq_f : ∀ (x : Input m), (f1 x ∧ f2 x) = f x := sorry
+        intro x
+        have hx := hComputes x
+        have hfx := f1_and_f2_eq_f x
+        rw [hx]
+        have hdec : decide (f1 x = true ∧ f2 x = true) = decide (f x = true) :=
+          Bool.decide_congr (iff_of_eq hfx)
+        rw [hdec]
+        simp
+    sorry
