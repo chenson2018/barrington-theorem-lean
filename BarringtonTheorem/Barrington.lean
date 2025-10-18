@@ -11,7 +11,7 @@ import Mathlib.GroupTheory.Perm.Basic
 
 open BarringtonTheorem
 
-variable {n m : ℕ}
+variable {n m : ℕ} [hn : NeZero n] [hm : NeZero m]
 
 def computes_with {G : Type} [Group G] (α : G)
     (P : GroupProgram G m) (f : Input m → Bool) : Prop :=
@@ -68,10 +68,36 @@ lemma not_computable
     (P : GroupProgram (Equiv.Perm (Fin n)) m)
     (f : Input m → Bool)
     (hα_cycle : Equiv.Perm.IsCycle α)
-    (hα : computes_with α P f) :
+    (hαcomputes : computes_with α P f) :
     ∃ (Q : GroupProgram (Equiv.Perm (Fin n)) m),
       Q.length = P.length ∧ computes_with α Q (λ x => ¬ f x) := by
-  sorry
+  have hαinv_cycle : Equiv.Perm.IsCycle α⁻¹ := Equiv.Perm.IsCycle.inv hα_cycle
+  have α_card_eq_α_inv_card : α.support.card = α⁻¹.support.card := by simp
+  have hαinvcomputes := computable_for_conj_cycles α α⁻¹ P f hα_cycle hαinv_cycle α_card_eq_α_inv_card hαcomputes
+  obtain ⟨Q, hQLen, hQcomputes⟩ := hαinvcomputes
+  let R : GroupProgram (Equiv.Perm (Fin n)) m := Q.map
+   (λ t =>
+   if t.i = Fin.ofNat m 0 then
+      {
+        i := t.i
+        g₀ := α * t.g₀
+        g₁ := α * t.g₁
+      }
+      else t)
+  use R
+  constructor
+  . simp [R, List.length_map]
+    exact hQLen
+  . rw [computes_with]
+    intro x
+    by_cases f x
+    case pos hpos =>
+      simp [hpos]
+      simp [R]
+      rw [computes_with] at hQcomputes
+      rw [evalProgram]
+      sorry
+    sorry
 
 lemma and_computable
     (α β : Equiv.Perm (Fin n))
@@ -96,79 +122,55 @@ lemma product_cycles_conjugate_cycle :
       β.support.card = 5 ∧
       Equiv.Perm.IsCycle (α * β * α⁻¹ * β⁻¹) ∧
       (α * β * α⁻¹ * β⁻¹).support.card = 5 := by
+  -- Define two explicit 5-cycles α = (0 1 2 3 4) and β = (0 2 4 3 1)
   let α : Equiv.Perm (Fin 5) :=
-    (Equiv.swap 0 4) *
-    (Equiv.swap 0 3) *
-    (Equiv.swap 0 2) *
-    (Equiv.swap 0 1)
+    (Equiv.swap 0 4) * (Equiv.swap 0 3) * (Equiv.swap 0 2) * (Equiv.swap 0 1)
   let β : Equiv.Perm (Fin 5) :=
-    (Equiv.swap 0 1) *
-    (Equiv.swap 0 3) *
-    (Equiv.swap 0 4) *
-    (Equiv.swap 0 2)
+    (Equiv.swap 0 1) * (Equiv.swap 0 3) * (Equiv.swap 0 4) *(Equiv.swap 0 2)
+  -- The commutator of the two 5-cycles is equal to (0 3 2 4 1)
   have hαβ : α * β * α⁻¹ * β⁻¹ = (Equiv.swap 0 1) * (Equiv.swap 0 4) * (Equiv.swap 0 2) * (Equiv.swap 0 3) := by decide
-  use α
-  use β
-  constructor
-  . rw [Equiv.Perm.IsCycle]
-    use 0
+  refine ⟨α, β, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  -- IsCycle α
+  . use 0
+    constructor
+    . trivial -- α 0 ≠ 0
+    -- ∀ y ∈ (Fin 5), SameCycle 0 y in α
+    . intro y hy
+      fin_cases y
+      . use 0; trivial -- (α ^ 0) 0 = 0
+      . use 1; trivial -- (α ^ 1) 0 = 1
+      . use 2; trivial -- (α ^ 2) 0 = 2
+      . use 3; trivial -- (α ^ 3) 0 = 3
+      . use 4; trivial -- (α ^ 4) 0 = 4
+  -- α.support.card = 5
+  . decide
+  -- IsCycle β
+  . use 0
     constructor
     . trivial
     . intro y hy
-      rw [Equiv.Perm.SameCycle]
       fin_cases y
-      . use 0
-        trivial
-      . use 1
-        trivial
-      . use 2
-        trivial
-      . use 3
-        trivial
-      . use 4
-        trivial
-  . constructor
-    . rfl
-    . constructor
-      . rw [Equiv.Perm.IsCycle]
-        use 0
-        constructor
-        . trivial
-        . intro y hy
-          fin_cases y
-          . use 0
-            trivial
-          . use 4
-            trivial
-          . use 1
-            trivial
-          . use 3
-            trivial
-          . use 2
-            trivial
-      . constructor
-        . rfl
-        . constructor
-          . rw [Equiv.Perm.IsCycle]
-            use 0
-            constructor
-            . trivial
-            . intro y hy
-              rw [Equiv.Perm.SameCycle]
-              rw [hαβ]
-              fin_cases y
-              . use 0
-                trivial
-              . use 4
-                trivial
-              . use 2
-                trivial
-              . use 1
-                trivial
-              . use 3
-                trivial
-          . rw [hαβ]
-            rfl
+      . use 0; trivial -- (β ^ 0) 0 = 0
+      . use 4; trivial -- (β ^ 4) 0 = 1
+      . use 1; trivial -- (β ^ 1) 0 = 2
+      . use 3; trivial -- (β ^ 3) 0 = 3
+      . use 2; trivial -- (β ^ 2) 0 = 4
+  -- β.support.card = 5
+  . decide
+  -- IsCycle (α * β * α⁻¹ * β⁻¹)
+  . rw [hαβ]
+    . use 0
+      constructor
+      . trivial
+      . intro y hy;
+        fin_cases y
+        . use 0; trivial -- ((α * β * α⁻¹ β⁻¹) ^ 0) 0 = 0
+        . use 4; trivial -- ((α * β * α⁻¹ β⁻¹) ^ 4) 0 = 1
+        . use 2; trivial -- ((α * β * α⁻¹ β⁻¹) ^ 2) 0 = 2
+        . use 1; trivial -- ((α * β * α⁻¹ β⁻¹) ^ 1) 0 = 3
+        . use 3; trivial -- ((α * β * α⁻¹ β⁻¹) ^ 3) 0 = 4
+  -- (α * β * α⁻¹ * β⁻¹).support.card = 5
+  . decide
 
 def example_perm1 : Equiv.Perm (Fin 5) :=
   (Equiv.swap 0 1) *
@@ -202,17 +204,11 @@ theorem barrington_theorem
   case var a =>
     intro α hαcycle hαsupport
     simp [Formula.eval] at hφf
-    let gpt : GPTriple (Equiv.Perm (Fin 5)) m :=
-      { i := a, g₀ := 1, g₁ := α }
-    let P : GroupProgram (Equiv.Perm (Fin 5)) m := [gpt]
-    use P
-    constructor
-    · simp [P]
-      have h1 : 0 < 4 := by linarith
-      exact Nat.one_le_pow d 4 h1
-    · simp [P, gpt, computes_with, evalProgram, evalTriple]
-      intro x
-      rw [← hφf x]
+    let P : GroupProgram (Equiv.Perm (Fin 5)) m :=
+      [{i := a, g₀ := 1, g₁ := α}]
+    refine ⟨P, ?_, ?_⟩
+    · exact Nat.one_le_pow d 4 (by linarith)
+    · intro x; simp [P, evalProgram, evalTriple, hφf]
   case not F F_ih =>
     rw [Formula.depth] at hφd
     simp [Formula.eval] at hφf
@@ -330,7 +326,7 @@ theorem barrington_theorem
     obtain ⟨δ, hδCycle, hδSupport, S, hSlen, hSComputes⟩ := existsαP
     have δ_card_eq_γ_card : δ.support.card = γ.support.card := by
       rw [hδSupport, hγsupport]
-    have hCompγ := @computable_for_conj_cycles 5 m δ γ S f hδCycle hγcycle δ_card_eq_γ_card hSComputes
+    have hCompγ := @computable_for_conj_cycles 5 m (by infer_instance) (hm) δ γ S f hδCycle hγcycle δ_card_eq_γ_card hSComputes
     obtain ⟨T, hTlen, hTcomputes⟩ := hCompγ
     use T
     rw [hTlen]
