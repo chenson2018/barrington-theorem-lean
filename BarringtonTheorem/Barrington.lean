@@ -11,6 +11,8 @@ import Mathlib.GroupTheory.Perm.Basic
 
 open BarringtonTheorem
 
+section EvalProgram
+
 variable {n m : ℕ}
 
 lemma evalProgram_join (P : GroupProgram (Equiv.Perm (Fin n)) m) (Q : GroupProgram (Equiv.Perm (Fin n)) m) :
@@ -40,6 +42,10 @@ lemma evalProgram_conjugate
     simp [evalProgram]
   case cons head tail tail_ih =>
     sorry
+
+end EvalProgram
+
+section HelperInequalities
 
 lemma nat_le_sub_one_of_max_le_left (n m k : ℕ) (h_one_add_max_le : 1 + max n m ≤ k) : n ≤ k - 1 := by
   have zero_lt_k : 0 < k := Nat.lt_of_succ_le (Nat.le_of_add_right_le h_one_add_max_le)
@@ -91,9 +97,21 @@ n ≤ 4^k := by
   exact le_trans h2 h1
   exact h_k_gt_one
 
+end HelperInequalities
+
+section Computability
+
+variable {m : ℕ}
+
 def computes_with {G : Type} [Group G] (α : G)
     (P : GroupProgram G m) (f : Input m → Bool) : Prop :=
   ∀ (x : Input m), evalProgram x P = if f x then α else 1
+
+end Computability
+
+section PermLemmas
+
+variable {n m : ℕ}
 
 lemma computable_for_conj_cycles
     (α β : Equiv.Perm (Fin n))
@@ -295,6 +313,12 @@ lemma not_computable
       simp [hneg]
       exact h1
 
+end PermLemmas
+
+section BarringtonTheorem
+
+variable {n m : ℕ} [hm : NeZero m]
+
 theorem barrington_theorem
     (f : Input m → Bool)
     (hfcomputed : computed_by_formula f d) :
@@ -362,3 +386,5 @@ theorem barrington_theorem
     use T
     rw [hTlen]
     exact And.intro hSlen hTcomputes
+
+end BarringtonTheorem
