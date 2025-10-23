@@ -41,7 +41,10 @@ lemma evalProgram_conjugate
   case nil =>
     simp [evalProgram]
   case cons head tail tail_ih =>
-    sorry
+    simp [evalProgram]
+    simp [evalProgram] at tail_ih
+    rw [tail_ih]
+    simp [evalTriple]
 
 end EvalProgram
 
