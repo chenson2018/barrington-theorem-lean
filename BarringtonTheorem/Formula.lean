@@ -1,4 +1,3 @@
-import Mathlib.Data.Nat.Basic
 import BarringtonTheorem.GroupPrograms
 
 open BarringtonTheorem

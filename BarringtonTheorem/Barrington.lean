@@ -1,13 +1,6 @@
-import Mathlib.GroupTheory.Perm.Cycle.Basic
-import Mathlib.Algebra.Group.Conj
 import BarringtonTheorem.GroupPrograms
 import BarringtonTheorem.Formula
-import Mathlib.Data.Fin.Basic
-import Mathlib.Logic.Equiv.Basic
 import Mathlib.Tactic
-import Mathlib.Data.Nat.Basic
-import Mathlib.Tactic.FinCases
-import Mathlib.GroupTheory.Perm.Basic
 
 open BarringtonTheorem
 

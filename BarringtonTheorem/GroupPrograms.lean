@@ -1,16 +1,4 @@
-import Mathlib.Algebra.Group.Basic
-import Mathlib.Data.Int.Basic
-import Mathlib.Data.Set.Basic
-import Mathlib.Data.Fin.Basic
-import Mathlib.GroupTheory.Perm.Basic
-import Mathlib.GroupTheory.Perm.Cycle.Basic
 import Mathlib.GroupTheory.Perm.Cycle.Concrete
-
-#print Group
-#check Group Nat
-#check Fin 5
-#check Equiv.Perm
-#print Equiv.Perm
 
 namespace BarringtonTheorem
 
@@ -20,8 +8,6 @@ structure GPTriple (G : Type) (n : ℕ) where
   i : Fin n
   g₀ : G
   g₁ : G
-
-#print Bool
 
 abbrev GroupProgram (G : Type) (n : ℕ) := List (GPTriple G n)
 abbrev Input (n : ℕ):= Fin n → Bool
