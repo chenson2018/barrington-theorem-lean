@@ -8,4 +8,4 @@ name = "BarringtonTheorem"
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "stable"
+rev = "v4.25.0-rc2"
