@@ -38,12 +38,8 @@ lemma two_mul_add_le_pow_succ_of_le_pow_pred
  (h_one_add_max_le_d : 1 + max f1 f2 ≤ d) : k ≤ 4 ^ d := by
   have h2 : 2 * (n + m) ≤ 2 * (2 * 4 ^ (d - 1)) := by grind
   have a : (d - 1) + 1 = d := by grind
-  rw [
-    ← Nat.mul_assoc 2 2 (4 ^ (d - 1)),
-    mul_comm 4 (4 ^ (d - 1))
-    ] at h2
-  simp_all only [← Nat.pow_succ]
-  simp_all only [Nat.succ_eq_add_one] 
+  rw [← Nat.mul_assoc 2 2 (4 ^ (d - 1)), mul_comm 4 (4 ^ (d - 1))] at h2
+  simp_all only [← Nat.pow_succ, Nat.succ_eq_add_one] 
 
 lemma succ_four_pow_le_four_pow_succ (d : ℕ) : 1 + 4 ^ d ≤ 4 ^ (d + 1) := by
   induction d <;> grind
